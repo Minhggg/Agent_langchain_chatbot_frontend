@@ -1,62 +1,96 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { askBot } from "./api";
 
+type Message = {
+  role: "user" | "assistant";
+  content: string;
+};
+
 export default function Home() {
-  const [question, setQuestion] = useState("");
-  const [answer, setAnswer] = useState("");
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const handleAsk = async () => {
-    if (!question.trim()) return;
+  // Scroll xuống cuối khi có tin nhắn mới
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
+  const handleSend = async () => {
+    if (!input.trim()) return;
+
+    const userMessage: Message = { role: "user", content: input };
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
     setLoading(true);
-    setAnswer("");
 
     try {
-      const reply = await askBot(question);
-      setAnswer(reply);
+      const reply = await askBot(input);
+      const botMessage: Message = { role: "assistant", content: reply };
+      setMessages((prev) => [...prev, botMessage]);
     } catch (err: unknown) {
-      if (err instanceof Error) setAnswer(err.message);
-      else setAnswer("Có lỗi xảy ra: Không xác định lỗi");
+      const botMessage: Message = {
+        role: "assistant",
+        content:
+          err instanceof Error
+            ? err.message
+            : "Có lỗi xảy ra: Không xác định lỗi",
+      };
+      setMessages((prev) => [...prev, botMessage]);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen bg-gray-900 p-6 text-white">
-      <h1 className="text-3xl font-bold mb-6 text-yellow-400 flex items-center gap-2">
+    <main className="flex flex-col h-screen bg-gray-900 p-4 text-white">
+      <h1 className="text-3xl font-bold mb-4 text-yellow-400 flex items-center gap-2 justify-center">
         🌤️ Weather Chatbot
       </h1>
 
-      <div className="w-full max-w-lg bg-gray-800 p-6 rounded-2xl shadow-lg">
-        <textarea
-          className="w-full p-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
-          rows={3}
-          placeholder="Hãy hỏi về thời tiết (ví dụ: Thời tiết ở Hà Nội thế nào?)"
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
+      {/* Chat messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.map((m, idx) => (
+          <div
+            key={idx}
+            className={`flex ${
+              m.role === "user" ? "justify-end" : "justify-start"
+            }`}
+          >
+            <div
+              className={`px-4 py-2 rounded-lg max-w-xl whitespace-pre-wrap ${
+                m.role === "user"
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-700 text-white"
+              }`}
+            >
+              {m.content}
+            </div>
+          </div>
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Input box */}
+      <div className="flex gap-2 mt-2">
+        <input
+          type="text"
+          placeholder="Nhập câu hỏi..."
+          className="flex-1 border rounded-lg px-4 py-2 focus:outline-none text-black"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSend()}
         />
-
         <button
-          onClick={handleAsk}
+          onClick={handleSend}
           disabled={loading}
-          className="mt-4 w-full py-2 bg-yellow-500 hover:bg-yellow-600 rounded-lg text-lg font-semibold disabled:opacity-50"
+          className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 rounded-lg font-semibold disabled:opacity-50"
         >
-          {loading ? "Đang xử lý..." : "Hỏi Bot"}
+          {loading ? "Đang gửi..." : "Gửi"}
         </button>
-
-        <div className="mt-6 p-4 bg-gray-700 rounded-lg min-h-[80px]">
-          {answer ? (
-            <p className="whitespace-pre-line">{answer}</p>
-          ) : (
-            <p className="text-gray-400 italic">
-              Câu trả lời sẽ hiển thị ở đây...
-            </p>
-          )}
-        </div>
       </div>
     </main>
   );
