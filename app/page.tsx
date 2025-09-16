@@ -14,7 +14,6 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Scroll xuống cuối khi có tin nhắn mới
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -46,13 +45,14 @@ export default function Home() {
   };
 
   return (
-    <main className="flex flex-col h-screen bg-gray-900 p-4 text-white">
-      <h1 className="text-3xl font-bold mb-4 text-yellow-400 flex items-center gap-2 justify-center">
-        🌤️ Weather Chatbot
+    <main className="flex flex-col h-screen bg-white text-black p-4">
+      {/* Header */}
+      <h1 className="text-2xl font-bold mb-4 text-center">
+        Chatbot Weather
       </h1>
 
       {/* Chat messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 border border-gray-300 rounded-lg">
         {messages.map((m, idx) => (
           <div
             key={idx}
@@ -63,8 +63,8 @@ export default function Home() {
             <div
               className={`px-4 py-2 rounded-lg max-w-xl whitespace-pre-wrap ${
                 m.role === "user"
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-700 text-white"
+                  ? "bg-gray-200 text-black"
+                  : "bg-gray-800 text-white"
               }`}
             >
               {m.content}
@@ -79,7 +79,7 @@ export default function Home() {
         <input
           type="text"
           placeholder="Nhập câu hỏi..."
-          className="flex-1 border rounded-lg px-4 py-2 focus:outline-none text-black"
+          className="flex-1 border rounded-lg px-4 py-2 focus:outline-none"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
@@ -87,7 +87,7 @@ export default function Home() {
         <button
           onClick={handleSend}
           disabled={loading}
-          className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 rounded-lg font-semibold disabled:opacity-50"
+          className="px-4 py-2 bg-black text-white rounded-lg font-semibold disabled:opacity-50"
         >
           {loading ? "Đang gửi..." : "Gửi"}
         </button>
